@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frikismania Arcade - El Desafío de la Maestra</title>
+    <style>
+        :root {
+            --verde-kawaii: #e8f5e9;
+            --verde-principal: #4caf50;
+            --verde-oscuro: #2e7d32;
+            --blanco: #ffffff;
+            --gris-oscuro: #333333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--verde-kawaii);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: var(--gris-oscuro);
+        }
+
+        .arcade-container {
+            background-color: var(--blanco);
+            border: 4px solid var(--verde-principal);
+            border-radius: 20px;
+            padding: 25px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 10px 20px rgba(76, 175, 80, 0.2);
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--verde-oscuro);
+            font-size: 24px;
+            margin-top: 0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .avatar-box {
+            background-color: #f1f8e9;
+            border-radius: 12px;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 2px dashed var(--verde-principal);
+            font-size: 14px;
+            font-weight: bold;
+            color: var(--verde-oscuro);
+        }
+
+        .question-box {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            min-height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn-option {
+            background-color: var(--blanco);
+            border: 2px solid var(--verde-principal);
+            border-radius: 10px;
+            padding: 14px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            text-align: left;
+        }
+
+        .btn-option:hover {
+            background-color: var(--verde-principal);
+            color: var(--blanco);
+            transform: translateY(-2px);
+        }
+
+        .score-box {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #666;
+        }
+
+        .result-screen {
+            display: none;
+        }
+
+        .reward-code {
+            background-color: #ffe082;
+            border: 2px dashed #ffb300;
+            padding: 15px;
+            font-size: 22px;
+            font-weight: bold;
+            letter-spacing: 2px;
+            margin: 20px 0;
+            border-radius: 8px;
+            color: #ff6f00;
+        }
+
+        .btn-reset {
+            background-color: var(--verde-oscuro);
+            color: var(--blanco);
+            border: none;
+            border-radius: 10px;
+            padding: 12px 25px;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+<div class="arcade-container">
+    <!-- Pantalla de Juego -->
+    <div id="game-screen">
+        <h1>Frikismania Arcade ⛩️</h1>
+        <div class="avatar-box">
+            🟢 Maestra de Tai Chi: "¡Demuestra tus conocimientos Otaku!"
+        </div>
+        <div class="question-box" id="question">Cargando desafío...</div>
+        <div class="options-container" id="options">
+            <!-- Las opciones se generarán dinámicamente -->
+        </div>
+        <div class="score-box">
+            Progreso: <span id="progress">1</span>/3
+        </div>
+    </div>
+
+    <!-- Pantalla de Resultados -->
+    <div id="result-screen" class="result-screen">
+        <h1>¡Desafío Superado! 🏆</h1>
+        <p>Has demostrado ser un auténtico experto en la cultura pop. La Maestra de Ojos Verdes está orgullosa de ti.</p>
+        <p>Tu recompensa secreta es:</p>
+        <div class="reward-code">CUPONTAICHI</div>
+        <p style="font-size: 14px; color: #555;">
+            👉 Envía esta palabra exacta por mensaje interno a nuestro Instagram <b>@Frikismania</b> y nuestro bot te entregará un 15% de descuento en tu primer Ramen o Figura.
+        </p>
+        <button class="btn-reset" onclick="resetGame()">Jugar de nuevo</button>
+    </div>
+</div>
+
+<script>
+    // Banco de preguntas estilo Otaku/Snacks
+    const questions = [
+        {
+            q: "¿Cuál es el sabor clásico y más viral de las galletas Pocky?",
+            options: ["Frutilla", "Chocolate", "Té Verde Matcha", "Lúcuma"],
+            correct: 1
+        },
+        {
+            q: "Si visitas la sección 'Ramen Coreano Fuego', ¿qué marca extrema estarías buscando?",
+            options: ["Maruchan", "Sapporo Ichiban", "Buldak Samyang", "Nissin Demae"],
+            correct: 2
+        },
+        {
+            q: "¿Qué tierno Pokémon tiene su propia versión de bebestible Ramune con canica?",
+            options: ["Pikachu", "Charizard", "Gengar", "Snorlax"],
+            correct: 0
+        }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+
+    const questionElement = document.getElementById('question');
+    const optionsContainer = document.getElementById('options');
+    const progressElement = document.getElementById('progress');
+    const gameScreen = document.getElementById('game-screen');
+    const resultScreen = document.getElementById('result-screen');
+
+    function loadQuestion() {
+        if (currentQuestionIndex >= questions.length) {
+            showResults();
+            return;
+        }
+
+        const currentQuestion = questions[currentQuestionIndex];
+        questionElement.innerText = currentQuestion.q;
+        progressElement.innerText = currentQuestionIndex + 1;
+        optionsContainer.innerHTML = '';
+
+        currentQuestion.options.forEach((option, index) => {
+            const button = document.createElement('button');
+            button.innerText = option;
+            button.classList.add('btn-option');
+            button.onclick = () => checkAnswer(index);
+            optionsContainer.appendChild(button);
+        });
+    }
+
+    function checkAnswer(selectedIndex) {
+        const currentQuestion = questions[currentQuestionIndex];
+        if (selectedIndex === currentQuestion.correct) {
+            score++;
+        }
+        
+        // Avanza independientemente para mantener el flujo rápido (Formato Alpha)
+        currentQuestionIndex++;
+        loadQuestion();
+    }
+
+    function showResults() {
+        gameScreen.style.display = 'none';
+        resultScreen.style.display = 'block';
+    }
+
+    function resetGame() {
+        currentQuestionIndex = 0;
+        score = 0;
+        resultScreen.style.display = 'none';
+        gameScreen.style.display = 'block';
+        loadQuestion();
+    }
+
+    // Iniciar juego al cargar la página
+    loadQuestion();
+</script>
+
+</body>
+</html>
